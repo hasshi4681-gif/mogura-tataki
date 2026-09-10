@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>かんたんモグラたたき</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:center;
+       font-family:system-ui,-apple-system,sans-serif;background:#f5ead7;color:#3b2a20}
+  .game{width:min(94vw,520px);text-align:center}
+  h1{margin:0 0 8px;font-size:clamp(28px,7vw,42px)}
+  .info{display:flex;justify-content:center;gap:24px;font-size:20px;font-weight:700;margin:12px 0}
+  button{font:inherit;cursor:pointer}
+  #start{border:0;border-radius:12px;padding:10px 24px;background:#6b4f3a;color:white;font-weight:700;margin-bottom:16px}
+  #start:active{transform:scale(.97)}
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px;
+         background:#8f6b4d;border-radius:20px;box-shadow:0 8px 0 #684a35}
+  .hole{position:relative;aspect-ratio:1.15/1;border:0;border-radius:50%;
+        background:#4b3426;overflow:hidden;box-shadow:inset 0 8px 0 #34231b;touch-action:manipulation}
+  .mole{position:absolute;left:50%;bottom:-5%;transform:translateX(-50%);
+        width:70%;aspect-ratio:1/1;border-radius:50% 50% 42% 42%;
+        background:#9b6848;border:5px solid #68432f;
+        transition:bottom .08s}
+  .mole:before,.mole:after{content:"";position:absolute;top:34%;width:11%;aspect-ratio:1;border-radius:50%;background:#222}
+  .mole:before{left:27%}.mole:after{right:27%}
+  .nose{position:absolute;top:51%;left:50%;transform:translate(-50%,-50%);
+        width:18%;aspect-ratio:1;border-radius:50%;background:#d98c82}
+  .up .mole{bottom:8%}
+  .hit .mole{background:#c98b61}
+  .message{height:32px;margin-top:18px;font-weight:700}
+  .hint{font-size:14px;opacity:.75}
+</style>
+</head>
+<body>
+<div class="game">
+  <h1>🔨 モグラたたき</h1>
+  <div class="info">
+    <span>スコア：<b id="score">0</b></span>
+    <span>残り：<b id="time">30</b>秒</span>
+  </div>
+  <button id="start" type="button">ゲームスタート</button>
+  <div class="board" id="board"></div>
+  <div class="message" id="message">スタートを押してね！</div>
+  <div class="hint">出てきたモグラをタップ！</div>
+</div>
+
+<script>
+const board=document.getElementById('board');
+const scoreEl=document.getElementById('score');
+const timeEl=document.getElementById('time');
+const startBtn=document.getElementById('start');
+const message=document.getElementById('message');
+
+for(let i=0;i<9;i++){
+  const hole=document.createElement('button');
+  hole.className='hole';
+  hole.innerHTML='<span class="mole"><span class="nose"></span></span>';
+  hole.addEventListener('pointerdown',(e)=>{ e.preventDefault();
+    if(!running || !hole.classList.contains('up')) return;
+    score++;
+    scoreEl.textContent=score;
+    hole.classList.remove('up');
+    hole.classList.add('hit');
+    setTimeout(()=>hole.classList.remove('hit'),120);
+  });
+  board.appendChild(hole);
+}
+
+const holes=[...document.querySelectorAll('.hole')];
+let running=false,score=0,time=30,timer,spawnTimer;
+
+function pop(){
+  if(!running)return;
+  holes.forEach(h=>h.classList.remove('up'));
+  const h=holes[Math.floor(Math.random()*holes.length)];
+  h.classList.add('up');
+  setTimeout(()=>h.classList.remove('up'),700);
+  spawnTimer=setTimeout(pop,Math.max(280,650-Math.min(score*8,300)));
+}
+
+function start(){
+  clearInterval(timer); clearTimeout(spawnTimer);
+  running=true; score=0; time=30;
+  scoreEl.textContent=score; timeEl.textContent=time;
+  message.textContent='たたけ！';
+  startBtn.textContent='もう一度スタート';
+  pop();
+  timer=setInterval(()=>{
+    time--; timeEl.textContent=time;
+    if(time<=0){
+      running=false; clearInterval(timer); clearTimeout(spawnTimer);
+      holes.forEach(h=>h.classList.remove('up'));
+      message.textContent=`終了！ スコアは ${score} 点！`;
+    }
+  },1000);
+}
+startBtn.addEventListener('pointerdown',(e)=>{ e.preventDefault(); start(); });
+</script>
+</body>
+</html>
